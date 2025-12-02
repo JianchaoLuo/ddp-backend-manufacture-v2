@@ -1,0 +1,48 @@
+  
+  # 匹配develop分支
+  develop:
+    # 触发事件为push事件
+    push:
+      - docker:
+          # 声明构建环境，可以在 dockerhub 上 https://hub.docker.com/_/maven 找到您需要maven和jdk版本
+          # image: maven:3.8.6-openjdk-8
+          image: maven:4.0.0-rc-4-amazoncorretto-21
+
+          volumes:
+            # 声明式的构建缓存 https://docs.cnb.cool/grammar/pipeline.html#volumes
+            - /root/.m2:copy-on-write
+        services:
+          # 流水线中启用 docker 服务
+          - docker
+        stages:
+          - name: mvn package
+            script: |
+              # 指定maven镜像源
+              mvn clean package -s ./settings.xml -DskipTests
+              mvn deploy -s ./settings.xml -DskipTests
+          # 云原生构建自动构建Docker镜像并将它发布到制品库，【上传Docker制品】https://docs.cnb.cool/artifact/docker.html
+          - name: docker build
+            script:
+              - docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:${CNB_COMMIT} .
+              - docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
+          - name: docker push
+            script:
+              - docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:${CNB_COMMIT}
+              - docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest
+  
+    # push:
+    # - services:
+    #     - docker
+    #   stages:
+    #     - name: maven build
+    #       script: |
+    #         echo "📦 开始 Maven 构建..."
+    #         mvn clean package -DskipTests
+    #         echo "✅ 构建完成"
+    #     # 同名镜像构建&推送
+    #     - name: docker build
+    #       script: docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
+    #     - name: docker push
+    #       script: docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest
+
+  # 更多资料见 https://docs.cnb.cool/build/quick-start.html

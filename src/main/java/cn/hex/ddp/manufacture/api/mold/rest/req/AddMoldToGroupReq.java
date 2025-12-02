@@ -1,0 +1,19 @@
+package cn.hex.ddp.manufacture.api.mold.rest.req;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+@Data
+public class AddMoldToGroupReq {
+    /**
+     * 层级
+     * 1代表最上层，2代表第二层,..
+     */
+    @NotNull(message = "模具层级不能为空")
+    private Integer layer;
+
+    /**
+     * 优先级
+     */
+    private Integer priority;
+}

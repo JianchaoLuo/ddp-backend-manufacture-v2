@@ -1,0 +1,118 @@
+# 测试环境配置
+
+# 端口号
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ddp-backend-manufacture-v2
+  # 配置数据源
+  datasource:
+    dynamic:
+      #设置默认的数据源或者数据源组,默认值即为master
+      primary: mes
+      #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
+      strict: false
+      datasource:
+        # mes系统数据源
+        mes:
+          driver-class-name: org.postgresql.Driver
+          url: jdbc:postgresql://${DB_HOST}/zngc?currentSchema=ddp_manufacture_service_v2
+          username: ${DB_USERNAME}
+          password: ${DB_PASSWORD}
+        # 仿真数据源
+        simulation:
+          driver-class-name: org.postgresql.Driver
+          url: jdbc:postgresql://${DB_HOST}/zngc?currentSchema=ddp_simulation_service
+          username: ${DB_USERNAME}
+          password: ${DB_PASSWORD}
+  # 配置redis
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE}
+      timeout: 10000
+      jedis:
+        pool:
+          enabled: true
+          # 连接池最大连接数（使用负值表示没有限制）
+          max-active: 8
+          # 连接池最大阻塞等待时间（使用负值表示没有限制）
+          max-wait: -1ms
+          # 连接池中的最大空闲连接
+          max-idle: 8
+          # 连接池中的最小空闲连接
+          min-idle: 0
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      indent_output: false
+      fail_on_empty_beans: false
+    #    defaultPropertyInclusion: NON_NULL #null的数据也需要返回
+    deserialization:
+      fail_on_unknown_properties: false
+    parser:
+      allow_unquoted_control_chars: true
+      allow_single_quotes: true
+  # 下面这个web配置，是为了使请求不存在的url时，能够按照通用返回模板返回（在全局异常处理器捕获NoHandlerFoundException即可）
+  web:
+    resources:
+      add-mappings: false
+
+# auto-table 自动维护表结构工具配置
+auto-table:
+  # 是否启用自动维护表功能。生产环境可以关闭该功能。
+  enable: true
+  # 自动删除数据库中多余的列。列删除后，列上的数据会发生丢失，无法找回
+  auto-drop-column: true
+  # 记录表信息维护过程中执行的SQL
+  record-sql:
+    enable: true
+    # 记录方式，db表示记录到数据库
+    record-type: db
+    # 当前SQL的版本,会体现在数据库的字段或者文件名上
+    version: 2.0.1
+
+# sa-token 配置
+sa-token:
+  # token 名称（同时也是 cookie 名称）
+  token-name: sa-token
+  # token 有效期（单位：秒） 默认30天，-1 代表永久有效
+  timeout: 2592000
+  # token 最低活跃频率（单位：秒），如果 token 超过此时间没有访问系统就会被冻结，默认-1 代表不限制，永不冻结
+  active-timeout: -1
+  # 是否允许同一账号多地同时登录 （为 true 时允许一起登录, 为 false 时新登录挤掉旧登录）
+  is-concurrent: true
+  # 在多人登录同一账号时，是否共用一个 token （为 true 时所有登录共用一个 token, 为 false 时每次登录新建一个 token）
+  is-share: true
+  # token 风格（默认可取值：uuid、simple-uuid、random-32、random-64、random-128、tik）
+  token-style: simple-uuid
+  # 是否输出操作日志
+  is-log: true
+influx:
+  url: http://10.216.217.131:8086
+  token: Ji8TdEkIHFa1-qRi8kFQ8d5172JZkTt3dYeR28-SvvilweeSP3dQI3Mk1p5asz80ABNRwSmFzQc49Cw17FQQ_Q==
+  org: hex
+  bucket: hex_bucket
+
+arthas:
+  # telnetPort、httpPort为 -1 ，则不listen telnet端口，为 0 ，则随机telnet端口
+  # 如果是防止一个机器上启动多个 arthas端口冲突。可以配置为随机端口，或者配置为 -1，并且通过tunnel server来使用arthas。
+  # ~/logs/arthas/arthas.log (用户目录下面)里可以找到具体端口日志
+  telnetPort: -1
+  httpPort: -1
+  # 127.0.0.1只能本地访问，0.0.0.0则可网络访问，但是存在安全问题
+  ip: 0.0.0.0
+  appName: ${spring.application.name}
+  # 默认情况下，会生成随机ID，如果 arthas agent配置了 appName，则生成的agentId会带上appName的前缀。
+  #  agent-id: hsehdfsfghhwertyfad
+  # tunnel-server地址
+  tunnel-server: ws://10.216.217.131:7777/ws
+
+logging:
+  level:
+    # 调整对仿真任务表（task表）操作的日志级别，让模拟器跑仿真任务日志更清晰
+    cn.hex.ddp.manufacture.infrastructure.task.persistence.postgresql.mapper: warn
